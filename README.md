@@ -1,6 +1,6 @@
 # rocks-strata: A Framework for Managing Incremental Backups with the RocksDB Storage Engine
 
-<!--- TODO(agf): [![Build Status](https://secure.travis-ci.org/facebookgo/rocks-strata.png?branch=master)](http://travis-ci.org/facebookgo/rocks-strata) --->
+[![Build Status](https://secure.travis-ci.org/facebookgo/rocks-strata.png?branch=master)](http://travis-ci.org/facebookgo/rocks-strata)
 
 rocks-strata is a framework for managing incremental backups of databases that use the RocksDB storage engine. Current drivers support MongoDB with the RocksDB storage engine ("MongoRocks") and use Amazon S3 for remote storage. rocks-strata also includes a tool to query backups from a MongoDB shell without doing a restore.
 
