@@ -1,4 +1,4 @@
-package stratatests
+package lrs3test
 
 import (
 	"fmt"
