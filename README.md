@@ -2,7 +2,7 @@
 
 <!--- TODO(agf): [![Build Status](https://secure.travis-ci.org/facebookgo/rocks-strata.png?branch=master)](http://travis-ci.org/facebookgo/rocks-strata) --->
 
-rocks-strata is a framework for managing incremental backups of databases that use the RocksDB storage engine. Current drivers support MongoDB with the RocksDB storage engine ("MongoRocks") and use Amazon S3 for remote storage. rocks-strata also includes a tool to query backups from a MongoDB shell.
+rocks-strata is a framework for managing incremental backups of databases that use the RocksDB storage engine. Current drivers support MongoDB with the RocksDB storage engine ("MongoRocks") and use Amazon S3 for remote storage. rocks-strata also includes a tool to query backups from a MongoDB shell without doing a restore.
 
 rocks-strata takes advantage of RocksDB's architecture, which makes cheap incremental backups possible. It can be extended to work with different database management systems and different storage environments.
 
@@ -22,7 +22,7 @@ If you'd like to use rocks-strata with MongoRocks (which is the main focus of th
 
 You'll need to have Go installed to build rocks-strata. See https://golang.org/doc/install.
 
-Get rocks-strata and its dependencies with `go get github.com/facebookgo/rocks-strata`.
+Get rocks-strata and its dependencies with `go get github.com/facebookgo/rocks-strata/strata`.
 
 To back up up to S3, first build the driver:
 ```
@@ -84,7 +84,7 @@ cd rocks-strata/strata/cmd/lreplica_s3storage_driver/mongoq
 go build
 ```
 
-This is a wrapper that adds new commands to the MongoDB shell. Checkout out `./mongoq --help`.
+This is a wrapper that adds new commands to the MongoDB shell. Check out `./mongoq --help`.
 
 To use this, you need to mount part of S3 as a read-only file system in user space. Set up a FUSE implementation such as yas3fs: https://github.com/danilop/yas3fs.
 
