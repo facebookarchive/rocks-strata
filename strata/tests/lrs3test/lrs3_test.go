@@ -356,7 +356,7 @@ func TestCollectGarbage(t *testing.T) {
 	ensure.True(t, gcStats.NumFMGarbage == 0)
 	ensure.True(t, gcStats.NumStatsGarbage == 1)
 
-	// New snapshot 1 (ID gets re-used)
+	// Snapshot 2
 	for i := 1; i <= maxEntryID; i += 3 {
 		if err := collection.Insert(bson.M{"_id": i, "answer": i}); err != nil {
 			t.Fatal(err)
@@ -370,16 +370,16 @@ func TestCollectGarbage(t *testing.T) {
 	ensure.Nil(t, err)
 
 	// There should be new files but no garbage
-	gcStats1, err = manager.CollectGarbage(replicaID)
+	gcStats2, err := manager.CollectGarbage(replicaID)
 	ensure.Nil(t, err)
-	ensure.True(t, gcStats1.NumNeeded > gcStats0.NumNeeded)
-	ensure.True(t, gcStats1.NumNeeded == gcStats1.NumFMNeeded)
-	ensure.True(t, gcStats1.NumStatsNeeded == 2)
-	ensure.True(t, gcStats1.NumGarbage == 0)
-	ensure.True(t, gcStats1.NumFMGarbage == 0)
-	ensure.True(t, gcStats1.NumStatsGarbage == 0)
+	ensure.True(t, gcStats2.NumNeeded > gcStats0.NumNeeded)
+	ensure.True(t, gcStats2.NumNeeded == gcStats2.NumFMNeeded)
+	ensure.True(t, gcStats2.NumStatsNeeded == 2)
+	ensure.True(t, gcStats2.NumGarbage == 0)
+	ensure.True(t, gcStats2.NumFMGarbage == 0)
+	ensure.True(t, gcStats2.NumStatsGarbage == 0)
 
-	// Delete snapshot 1. This should cause a known number of files to become garbage.
+	// Delete snapshot 2. This should cause a known number of files to become garbage.
 	metadata, err = manager.GetSnapshotMetadata(replicaID, "1")
 	ensure.Nil(t, err)
 	err = manager.DeleteSnapshot(*metadata)
@@ -393,7 +393,7 @@ func TestCollectGarbage(t *testing.T) {
 	ensure.True(t, gcStats.NumNeeded == gcStats0.NumNeeded)
 	ensure.True(t, gcStats.NumFMNeeded == gcStats.NumNeeded)
 	ensure.True(t, gcStats.NumStatsNeeded == 1)
-	ensure.True(t, gcStats.NumGarbage == gcStats1.NumNeeded-gcStats0.NumNeeded)
+	ensure.True(t, gcStats.NumGarbage == gcStats2.NumNeeded-gcStats0.NumNeeded)
 	ensure.True(t, gcStats.NumGarbage == gcStats.NumFMGarbage)
 	ensure.True(t, gcStats.NumStatsGarbage == 1)
 	ensure.True(t, gcStats.NumErrsDeleting == 0)

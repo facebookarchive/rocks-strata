@@ -322,21 +322,21 @@ func (s *SnapshotManager) getNextSnapshotID(replicaID string) (string, error) {
 	} else if err != nil {
 		return "", err
 	}
-	idsInUse := make(map[string]struct{}, len(lazyMetadatas))
+
+	var nextID int64 = 0
 	for _, lazy := range lazyMetadatas {
 		_, id, _, err := GetInfoFromMetadataPath(lazy.MetadataPath)
 		if err != nil {
 			return "", err
 		}
-		idsInUse[id] = struct{}{}
-	}
-	for i := 0; i <= len(lazyMetadatas); i++ {
-		id := strconv.Itoa(i)
-		if _, found := idsInUse[id]; !found {
-			return id, nil
+		idInt, err := strconv.ParseInt(id, 10, 64)
+		if err != nil {
+			Log(fmt.Sprintf("Skipping backup ID %s (does not parse to int64)", id))
+		} else if idInt >= nextID {
+			nextID = idInt + 1
 		}
 	}
-	return "", errors.New("Could not find an available ID")
+	return strconv.FormatInt(nextID, 10), nil
 }
 
 // GetSnapshot builds a Snapshot struct from the given metadata, which can be used to access
