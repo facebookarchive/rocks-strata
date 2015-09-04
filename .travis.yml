@@ -1,7 +1,8 @@
 language: go
 
 env:
-    - USING_MONGO_3X=true
+    # Set to true when a MongoRocks environment is set up
+    - USING_MONGO_3X=false
 
 go:
     - 1.4
