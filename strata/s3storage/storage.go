@@ -20,7 +20,7 @@ import (
 	"github.com/AdRoll/goamz/s3"
 )
 
-// S3Storage implements the strata.PersistenceManager interface using S3 as its storage backing
+// S3Storage implements the strata.Storage interface using S3 as its storage backing
 type S3Storage struct {
 	s3     *s3.S3
 	bucket *s3.Bucket
