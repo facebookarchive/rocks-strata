@@ -121,10 +121,17 @@ type Storage interface {
 	// Get returns a Reader at the specified string
 	Get(string) (reader io.ReadCloser, err error)
 
-	// Put stores the bytes at the specified location
+	// Put stores the bytes at the specified location.
+	// Implementations should see comments on PutReader.
 	Put(path string, data []byte) error
 
 	// PutReader stores the contents of Reader at the specified location
+	// Put and PutReader should not leave any incomplete files in the event of
+	// a failure, unless those files end in ".tmp". Garbage collection will
+	// eventually remove .tmp files.
+	// Suggestion: If the storage system does not support atomic Puts, consider
+	// implementing Put and PutReader by first writing to a .tmp file, and then
+	// atomically renaming the file to remove the .tmp suffix.
 	PutReader(path string, reader io.Reader) error
 
 	// Delete the contents stored at the specified string.
@@ -740,6 +747,11 @@ type GCStats struct {
 
 // CollectGarbage examines the persisted files related to the specified replica
 // and deletes files that are not needed by current backups.
+// This is mostly intended to remove database files that were once needed, but are no longer needed by existing backups.
+// CollectGarbage also has the following important property: It examines all
+// the paths where SnapshotManager might write objects associated with
+// replicaID, and it deletes all .tmp files that it finds.
+//
 func (s *SnapshotManager) CollectGarbage(replicaID string) (*GCStats, error) {
 	start := time.Now()
 	stats := GCStats{}
@@ -747,6 +759,8 @@ func (s *SnapshotManager) CollectGarbage(replicaID string) (*GCStats, error) {
 	Log("Starting to collect garbage for " + replicaID)
 
 	// Determine which files are needed by current backups
+	// This will remove any .tmp files that are under replicaID+"/", since no
+	// needed files end in .tmp.
 	lazySnapshotMetadatas, err := s.GetLazyMetadata(replicaID)
 	if err != nil && !IsErrNotFound(err) {
 		return &stats, err
@@ -807,6 +821,7 @@ func (s *SnapshotManager) CollectGarbage(replicaID string) (*GCStats, error) {
 	}
 
 	// Now handle files under fileMetadataPrefix
+	// All .tmp files under fileMetadataPrefix+replicaID will be removed
 	filesFM, err := s.storage.List(fileMetadataPrefix+replicaID+"/", maxBackupFilesPerDB)
 	if err != nil {
 		return &stats, err
@@ -832,6 +847,7 @@ func (s *SnapshotManager) CollectGarbage(replicaID string) (*GCStats, error) {
 	}
 
 	// Now handle files under statsPrefix
+	// All .tmp files under statsPrefix+replicaID will be removed
 	neededStats := make(map[string]struct{})
 	for _, lazy := range lazySnapshotMetadatas {
 		neededStats[strings.TrimPrefix(lazy.MetadataPath, metadataPrefix)] = struct{}{}
@@ -854,6 +870,28 @@ func (s *SnapshotManager) CollectGarbage(replicaID string) (*GCStats, error) {
 		Log("Deleting " + statsFile)
 		if err = s.storage.Delete(statsFile); err != nil {
 			Log(fmt.Sprintf("Non-fatal error deleting %s from persistent storage: %s", statsFile, err))
+			stats.NumErrsDeleting++
+		}
+	}
+
+	// Finally, we search for and remove all .tmp files under metadataPrefix+replicaID.
+	// This is a cautious approach. The code block could instead delete all
+	// metadata files for which goodMetadataPathFormat() is false.
+	metadataFiles, err := s.storage.List(metadataPrefix+replicaID+"/", maxBackupFilesPerDB)
+	if err != nil {
+		return &stats, err
+	}
+	mdFilesToDelete := statsToDelete[:0]
+	for _, mdFile := range metadataFiles {
+		if strings.HasSuffix(mdFile, ".tmp") {
+			mdFilesToDelete = append(mdFilesToDelete, mdFile)
+		}
+	}
+	Log(fmt.Sprintf("Found %d metadata files .tmp for deletion", len(mdFilesToDelete)))
+	for _, mdFile := range mdFilesToDelete {
+		Log("Deleting " + mdFile)
+		if err = s.storage.Delete(mdFile); err != nil {
+			Log(fmt.Sprintf("Non-fatal error deleting %s from persistent storage: %s", mdFile, err))
 			stats.NumErrsDeleting++
 		}
 	}
@@ -912,6 +950,10 @@ func getSizeFromFilePath(path string) (int64, error) {
 
 // GetInfoFromMetadataPath returns replica ID, snapshot ID, and snapshot time  based on metadataPath
 func GetInfoFromMetadataPath(metadataPath string) (replicaID, snapshotID, time string, err error) {
+	if !strings.HasPrefix(metadataPath, metadataPrefix) || !strings.HasSuffix(metadataPath, ".json") {
+		err = fmt.Errorf("metadata path %s not in expected format", metadataPath)
+		return
+	}
 	trimmed := strings.TrimPrefix(metadataPath, metadataPrefix)
 	trimmed = strings.TrimSuffix(trimmed, ".json")
 	firstsplit := strings.Split(trimmed, "/")
