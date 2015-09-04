@@ -6,7 +6,7 @@ rocks-strata is a framework for managing incremental backups of databases that u
 
 rocks-strata takes advantage of RocksDB's architecture, which makes cheap incremental backups possible. It can be extended to work with different database management systems and different storage environments.
 
-rocks-strata has been running in production at Parse since about August 13, 2015. Here's the blog post: TODO(agf)
+rocks-strata has been running in production at Parse since about August 13, 2015. Here's the blog post: http://blog.parse.com/learn/engineering/strata-open-source-library-for-efficient-mongodb-backups/
 
 For more information about running your Mongo database with the RocksDB storage engine, see https://github.com/mongodb-partners/mongo-rocks.
 
