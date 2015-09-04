@@ -408,7 +408,13 @@ func (sh *QShell) changeReplicaID(cmd string) error {
 // Interact runs the interactive mongo shell, but intercepts special commands
 func (sh *QShell) Interact() error {
 	for {
-		cmd, _ := sh.term.ReadLine()
+		cmd, err := sh.term.ReadLine()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return err
+		}
 		if cmd == "exit" {
 			break
 		}
