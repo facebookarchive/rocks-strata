@@ -42,9 +42,19 @@ func NewS3Storage(region aws.Region, auth aws.Auth, bucketName string, prefix st
 	s3obj := s3.New(auth, region)
 	bucket := s3obj.Bucket(bucketName)
 
-	err := bucket.PutBucket(bucketACL)
+	// Running PutBucket too many times in parallel (such as distributed cron) can generate the error:
+	// "A conflicting conditional operation is currently in progress against this resource. Please try again"
+	// We should only call PutBucket when we suspect that the bucket doesn't exist. Unfortunately, the
+	// current AdRoll/goamz lib doesn't implement ListBuckets, so to check that the bucket exists
+	// do a List and see if we get an error before calling PutBucket.
+	_, err := bucket.List("", "/", "", 1)
+	// technically, there are many reasons this could fail (such as access denied, or other network error)
+	// but this should sufficiently limit the number of times PutBucket is called in normal operations
 	if err != nil {
-		return nil, err
+		err = bucket.PutBucket(bucketACL)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return &S3Storage{
 		s3:     s3obj,
