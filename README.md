@@ -143,6 +143,39 @@ To avoid impacting performance in production, you may wish to dedicate a hidden 
 
 See `examples/monitoring` for ideas
 
+### Using password auth
+
+If your mongo distribution has authentication enabled, you must specify a username and password when running the backup command. This user needs access to run the *getCmdLineOpts* and *setParameter* commands on the admin database. To configure a backup user with minimal access needed to run strata backups, you can define a custom role with only these permissions:
+
+```
+> db.createRole({role: "rocksBackupRole", privileges: [ { resource: {cluster: true}, actions: ["getCmdLineOpts", "setParameter"]}], roles: [] })
+{
+        "role" : "rocksBackupRole",
+        "privileges" : [
+                {
+                        "resource" : {
+                                "cluster" : true
+                        },
+                        "actions" : [
+                                "getCmdLineOpts",
+                                "setParameter"
+                        ]
+                }
+        ],
+        "roles" : [ ]
+}
+> db.createUser({user: "backupUser", pwd: "abc123", roles: [ {role: "rocksBackupRole", db: "admin"} ]})
+Successfully added user: {
+        "user" : "backupUser",
+        "roles" : [
+                {
+                        "role" : "rocksBackupRole",
+                        "db" : "admin"
+                }
+        ]
+}
+```
+
 ## Extending Strata
 
 You can extend rocks-strata by implementing the Storage and Replica interfaces, defined in `manager.go`. And, you will probably want to implement a driver similar to `rocks-strata/strata/cmd/lreplica_s3storage_driver/strata/main.go`.
