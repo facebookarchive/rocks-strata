@@ -15,10 +15,10 @@ import (
 	"strings"
 	"syscall"
 
-	"code.google.com/p/go.crypto/ssh/terminal" // TODO(agf): This will probably be migrated to github soon
 	"github.com/facebookgo/rocks-strata/strata"
 	"github.com/jessevdk/go-flags"
 	"github.com/kr/pty"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 type mongoState struct {
