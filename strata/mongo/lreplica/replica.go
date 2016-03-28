@@ -22,37 +22,45 @@ import (
 )
 
 type sessionGetter interface {
-	get(port string) (*mgo.Session, error)
+	get(port, username, password string) (*mgo.Session, error)
 }
 
 type localSessionGetter struct{}
 
 // port could be the empty string
-func (l *localSessionGetter) get(port string) (*mgo.Session, error) {
+func (l *localSessionGetter) get(port, username, password string) (*mgo.Session, error) {
 	addr := "localhost"
 	if port != "" {
 		addr += ":" + port
 	}
 	return mgo.DialWithInfo(&mgo.DialInfo{
-		Direct:  true,
-		Addrs:   []string{addr},
-		Timeout: 5 * time.Minute})
+		Direct:   true,
+		Addrs:    []string{addr},
+		Timeout:  5 * time.Minute,
+		Username: username,
+		Password: password})
 }
 
 // LocalReplica is a replica where all methods that take a ReplicaID must be
 // run on the host corresponding to ReplicaID
 type LocalReplica struct {
 	port                string
+	username            string
+	password            string
 	sessionGetter       sessionGetter
 	maxBackgroundCopies int
 }
 
 // NewLocalReplica constructs a LocalReplica
-func NewLocalReplica(maxBackgroundCopies int, port string) (*LocalReplica, error) {
+func NewLocalReplica(maxBackgroundCopies int, port, username, password string) (*LocalReplica, error) {
 	return &LocalReplica{
 		sessionGetter:       &localSessionGetter{},
 		maxBackgroundCopies: maxBackgroundCopies,
-		port:                port}, nil
+		port:                port,
+		username:            username,
+		password:            password,
+	}, nil
+
 }
 
 // MaxBackgroundCopies returns the maximum number of copies that CreateSnapshot() and
@@ -162,7 +170,7 @@ func nestedBsonMapGet(m bson.M, arg string, moreArgs ...string) (interface{}, er
 // TODO(agf): Have a way to pass in tags
 func (r *LocalReplica) CreateSnapshot(replicaID, snapshotID string) (*strata.Snapshot, error) {
 	strata.Log("Getting session for CreateSnapshot()")
-	session, err := r.sessionGetter.get(r.port)
+	session, err := r.sessionGetter.get(r.port, r.username, r.password)
 	if err != nil {
 		return nil, err
 	}
