@@ -4,7 +4,7 @@
 # You may need to use a different tool if start-stop-daemon is not available for your Linux distribution.
 
 # Example crontab entry:
-# 0 */2 * * * /path/to/backup/run.sh BUCKET BUCKET_PREFIX REPLICA_ID 30d
+# 0 */2 * * * /path/to/backup/run.sh BUCKET BUCKET_PREFIX REPLICA_ID 720h
 # Every two hours, this will backup, delete backups older than 30 days, and garbage collect
 
 BUCKET=$1
