@@ -370,7 +370,7 @@ func (c *ShowReplicaIDsCommand) Execute(args []string) error {
 type ShowBackupsCommand struct {
 	driverFactory DriverFactory
 	ReplicaID     string `short:"r" long:"replica-id" description:"The replica ID to show backups for" required:"true"`
-	ShowSize      bool   `short:"s" long:"show-size" default:"false" optional:"true" description:"Print backup size with backup ids"`
+	ShowSize      []bool `short:"s" long:"show-size" optional:"true" description:"Print backup size with backup ids"`
 }
 
 // Execute calls ListBackups to implement "show backups"
@@ -379,7 +379,11 @@ func (c *ShowBackupsCommand) Execute(args []string) error {
 	if err != nil {
 		panic(err)
 	}
-	if err := driver.ListBackups(c.ReplicaID, c.ShowSize); err != nil {
+	showSize := false
+	if len(c.ShowSize) > 0 {
+		showSize = true
+	}
+	if err := driver.ListBackups(c.ReplicaID, showSize); err != nil {
 		panic(err)
 	}
 	return nil
@@ -413,9 +417,9 @@ func RunCLI(factory DriverFactory) {
 	parser.AddCommand("delete", "delete backup data", "remove backup metadata from storage", &DeleteCommand{driverFactory: factory})
 	parser.AddCommand("gc", "garbage collect", "remove unneeded data files for the given replica id from storage", &GCCommand{driverFactory: factory})
 	showCmd, _ := parser.AddCommand("show", "show backup data", "use to display the backup metadata", &ShowCommand{})
-	showCmd.AddCommand("replica-ids", "show replica ids", "show replica ids known to the metadata", &ShowReplicaIDsCommand{driverFactory: factory})
 	showCmd.AddCommand("backups", "show backups", "show backups for the given replica id", &ShowBackupsCommand{driverFactory: factory})
 	showCmd.AddCommand("last-backup-time", "seconds since epoch", "show the start time of the most recent successful backup for the given replica id, in seconds since epoch", &ShowLastBackupTimeCommand{driverFactory: factory})
+	showCmd.AddCommand("replica-ids", "show replica ids", "show replica ids known to the metadata", &ShowReplicaIDsCommand{driverFactory: factory})
 
 	if _, err := parser.Parse(); err != nil {
 		os.Exit(1)
