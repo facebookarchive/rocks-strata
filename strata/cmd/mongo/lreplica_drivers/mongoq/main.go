@@ -6,7 +6,7 @@
 package main
 
 import (
-	"github.com/facebookgo/rocks-strata/strata/cmd/mongo/lreplica_s3storage_driver/lrs3driver"
+	"github.com/facebookgo/rocks-strata/strata/cmd/mongo/lreplica_drivers/lrs3driver"
 	"github.com/facebookgo/rocks-strata/strata/mongo"
 )
 
