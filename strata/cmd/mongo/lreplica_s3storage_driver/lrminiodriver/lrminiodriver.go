@@ -43,7 +43,11 @@ func (factory DriverFactory) Driver() (*strata.Driver, error) {
 	accessKey := os.Getenv("MINIO_ACCESS_KEY_ID")
 	secretKey := os.Getenv("MINIO_SECRET_ACCESS_KEY")
 	if endPoint == "" || accessKey == "" || secretKey == "" {
-		return nil, errors.New("Environment variables MINIO_ENDPOINT, MINIO_SECURE, MINIO_ACCESS_KEY_ID and MINIO_SECRET_ACCESS_KEY must be set")
+		return nil, errors.New("Environment variables MINIO_ENDPOINT, MINIO_ACCESS_KEY_ID and MINIO_SECRET_ACCESS_KEY must be set")
+	}
+
+	if secure == "" {
+		secure = "true"
 	}
 
 	secureBool, err := strconv.ParseBool(secure)
