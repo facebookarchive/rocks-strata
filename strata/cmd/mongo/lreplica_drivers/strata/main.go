@@ -18,9 +18,9 @@ import (
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	// Use a custom storage engine if set in the environment
-	// Use S3 as the default storage engine
-	switch strings.ToLower(os.Getenv("STORAGE_ENGINE")) {
+	// Use a custom remote storage if set in the environment
+	// Use S3 as the default remote storage
+	switch strings.ToLower(os.Getenv("REMOTE_STORAGE")) {
 	case "minio":
 		strata.RunCLI(lrminiodriver.DriverFactory{Ops: &lrminiodriver.Options{}})
 	default:
