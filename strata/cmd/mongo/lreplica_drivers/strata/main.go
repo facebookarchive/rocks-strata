@@ -6,13 +6,24 @@
 package main
 
 import (
+	"os"
 	"runtime"
+	"strings"
 
 	"github.com/facebookgo/rocks-strata/strata"
+	"github.com/facebookgo/rocks-strata/strata/cmd/mongo/lreplica_drivers/lrminiodriver"
 	"github.com/facebookgo/rocks-strata/strata/cmd/mongo/lreplica_drivers/lrs3driver"
 )
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	strata.RunCLI(lrs3driver.DriverFactory{Ops: &lrs3driver.Options{}})
+
+	// Use a custom remote storage if set in the environment
+	// Use S3 as the default remote storage
+	switch strings.ToLower(os.Getenv("REMOTE_STORAGE")) {
+	case "minio":
+		strata.RunCLI(lrminiodriver.DriverFactory{Ops: &lrminiodriver.Options{}})
+	default:
+		strata.RunCLI(lrs3driver.DriverFactory{Ops: &lrs3driver.Options{}})
+	}
 }
