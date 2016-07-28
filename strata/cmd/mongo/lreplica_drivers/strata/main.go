@@ -6,13 +6,24 @@
 package main
 
 import (
+	"os"
 	"runtime"
+	"strings"
 
 	"github.com/facebookgo/rocks-strata/strata"
+	"github.com/facebookgo/rocks-strata/strata/cmd/mongo/lreplica_drivers/lrminiodriver"
 	"github.com/facebookgo/rocks-strata/strata/cmd/mongo/lreplica_drivers/lrs3driver"
 )
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	strata.RunCLI(lrs3driver.DriverFactory{Ops: &lrs3driver.Options{}})
+
+	// Use a custom storage engine if set in the environment
+	// Use S3 as the default storage engine
+	switch strings.ToLower(os.Getenv("STORAGE_ENGINE")) {
+	case "minio":
+		strata.RunCLI(lrminiodriver.DriverFactory{Ops: &lrminiodriver.Options{}})
+	default:
+		strata.RunCLI(lrs3driver.DriverFactory{Ops: &lrs3driver.Options{}})
+	}
 }
