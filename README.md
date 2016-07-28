@@ -26,7 +26,7 @@ Get rocks-strata and its dependencies with `go get github.com/facebookgo/rocks-s
 
 To back up up to S3, first build the driver:
 ```
-cd rocks-strata/strata/cmd/lreplica_s3storage_driver/strata
+cd rocks-strata/strata/cmd/mongo/lreplica_drivers/strata
 go build
 ```
 
@@ -51,7 +51,7 @@ mongo --eval 'db.testc.insert( { _id: "cheetah" } )'
 
 Then, while mongod is still running, perform a backup! The values of `--bucket`, `--bucket-prefix`, and `--replica-id` below are just suggestions.
 ```
-cd rocks-strata/strata/cmd/lreplica_s3storage_driver/strata
+cd rocks-strata/strata/cmd/mongo/lreplica_drivers/strata
 ./strata --bucket=all_backups --bucket-prefix=mongo-rocks backup --replica-id=one-off-test
 ```
 If you used a non-default port to start mongod, you'll need to specify it with `./strata --port=`.
@@ -80,7 +80,7 @@ In another shell, launch the MongoDB shell (`mongo`) and enter `db.testc.find()`
 
 Inspecting backups is almost as easy as inspecting live databases. First, build an extended MongoDB shell:
 ```
-cd rocks-strata/strata/cmd/lreplica_s3storage_driver/mongoq
+cd rocks-strata/strata/cmd/mongo/lreplica_drivers/mongoq
 go build
 ```
 
@@ -95,7 +95,7 @@ Congrats, you should be set up to query arbitrary backups from a command-line sh
 mongod --dbpath=/absolute/path/to/tmpdb --storageEngine=rocksdb
 # Change shells
 mongo --eval 'db.testc.insert( { _id: "tiger" } )'
-cd rocks-strata/strata/cmd/lreplica_s3storage_driver/strata
+cd rocks-strata/strata/cmd/mongo/lreplica_drivers/strata
 ./strata --bucket=all_backups --bucket-prefix=mongo-rocks backup --replica-id=one-off-test
 ```
 
@@ -178,4 +178,4 @@ Successfully added user: {
 
 ## Extending Strata
 
-You can extend rocks-strata by implementing the Storage and Replica interfaces, defined in `manager.go`. And, you will probably want to implement a driver similar to `rocks-strata/strata/cmd/lreplica_s3storage_driver/strata/main.go`.
+You can extend rocks-strata by implementing the Storage and Replica interfaces, defined in `manager.go`. And, you will probably want to implement a driver similar to `rocks-strata/strata/cmd/mongo/lreplica_drivers/strata/main.go`.

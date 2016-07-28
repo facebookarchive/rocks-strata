@@ -6,10 +6,13 @@
 package main
 
 import (
-	"github.com/facebookgo/rocks-strata/strata/cmd/mongo/lreplica_s3storage_driver/lrs3driver"
-	"github.com/facebookgo/rocks-strata/strata/mongo"
+	"runtime"
+
+	"github.com/facebookgo/rocks-strata/strata"
+	"github.com/facebookgo/rocks-strata/strata/cmd/mongo/lreplica_drivers/lrs3driver"
 )
 
 func main() {
-	mongoq.RunCLI(lrs3driver.DriverFactory{Ops: &lrs3driver.Options{}})
+	runtime.GOMAXPROCS(runtime.NumCPU())
+	strata.RunCLI(lrs3driver.DriverFactory{Ops: &lrs3driver.Options{}})
 }
