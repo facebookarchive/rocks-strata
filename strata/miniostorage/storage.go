@@ -37,14 +37,15 @@ func NewMinioStorage(endPoint, accessKeyID, secretAccessKey, bucket, prefix, reg
 		region = "us-east-1"
 	}
 
-	// The BucketExists method returns an error if the bucket doesn't exist
-	if err = mc.BucketExists(bucket); err != nil {
-
+	exists, err := mc.BucketExists(bucket)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
 		if err = mc.MakeBucket(bucket, region); err != nil {
 			// Since the bucket couldn't be created, there's nothing furter to do
 			return nil, err
 		}
-
 	}
 
 	return &MinioStorage{
