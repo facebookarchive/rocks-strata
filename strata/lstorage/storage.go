@@ -71,22 +71,34 @@ func (ls *LStorage) Delete(fpath string) error {
 	return os.Remove(ls.addPrefix(fpath))
 }
 
-// List returns a list of files (up to maxSize) in the given directory
+// List returns a list of files (up to maxSize) in the given directory.
+// Recursively search for files. If the directory does not exist, return an empty list.
 func (ls *LStorage) List(dir string, maxSize int) ([]string, error) {
-	files, err := ioutil.ReadDir(ls.addPrefix(dir))
+	var list []string
+	entries, err := ioutil.ReadDir(ls.addPrefix(dir))
 	if err != nil {
+		if os.IsNotExist(err) {
+			return list, nil
+		}
 		return nil, err
 	}
-	var list []string
-	for fileNum, file := range files {
-		if fileNum == maxSize {
+	for entryNum, entry := range entries {
+		if entryNum == maxSize {
 			break
 		}
 		if len(list) == maxSize {
 			break
 		}
-		if !file.IsDir() {
-			list = append(list, path.Clean(dir+"/"+file.Name()))
+
+		entryFullName := path.Clean(path.Join(dir, entry.Name()))
+		if !entry.IsDir() {
+			list = append(list, entryFullName)
+		} else {
+			subdirList, err := ls.List(entryFullName, maxSize-len(list))
+			if err != nil {
+				return list, err
+			}
+			list = append(list, subdirList...)
 		}
 	}
 	return list, nil
