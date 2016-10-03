@@ -464,7 +464,7 @@ func startMongoQ(driver *strata.Driver, mountPath string, showSize bool, mongodP
 // Options relevant to extended mongo shell
 type Options struct {
 	MountPath  string `short:"m" long:"mount-path" description:"Wrapped mongo shell will look for database files at mount-path. You could set up this path with yas3fs." required:"true"`
-	ShowSize   bool   `short:"s" long:"show-size" default:"false" description:"Print backup size with backup ids"`
+	ShowSize   bool   `short:"s" long:"show-size" description:"Print backup size with backup ids"`
 	MongodPath string `long:"mongod-path" default:"mongod" description:"path to mongod executable"`
 	MongoPath  string `long:"mongo-path" default:"mongo" description:"path to mongo executable"`
 }
