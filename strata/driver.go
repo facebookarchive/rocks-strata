@@ -370,7 +370,7 @@ func (c *ShowReplicaIDsCommand) Execute(args []string) error {
 type ShowBackupsCommand struct {
 	driverFactory DriverFactory
 	ReplicaID     string `short:"r" long:"replica-id" description:"The replica ID to show backups for" required:"true"`
-	ShowSize      []bool `short:"s" long:"show-size" optional:"true" description:"Print backup size with backup ids"`
+	ShowSize      bool   `short:"s" long:"show-size" description:"Print backup size with backup ids"`
 }
 
 // Execute calls ListBackups to implement "show backups"
@@ -379,11 +379,7 @@ func (c *ShowBackupsCommand) Execute(args []string) error {
 	if err != nil {
 		panic(err)
 	}
-	showSize := false
-	if len(c.ShowSize) > 0 {
-		showSize = true
-	}
-	if err := driver.ListBackups(c.ReplicaID, showSize); err != nil {
+	if err := driver.ListBackups(c.ReplicaID, c.ShowSize); err != nil {
 		panic(err)
 	}
 	return nil
