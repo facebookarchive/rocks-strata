@@ -13,6 +13,7 @@ import (
 	"github.com/facebookgo/rocks-strata/strata"
 	"github.com/facebookgo/rocks-strata/strata/cmd/mongo/lreplica_drivers/lrminiodriver"
 	"github.com/facebookgo/rocks-strata/strata/cmd/mongo/lreplica_drivers/lrs3driver"
+	"github.com/facebookgo/rocks-strata/strata/cmd/mongo/lreplica_drivers/lrldriver"
 )
 
 func main() {
@@ -23,6 +24,8 @@ func main() {
 	switch strings.ToLower(os.Getenv("REMOTE_STORAGE")) {
 	case "minio":
 		strata.RunCLI(lrminiodriver.DriverFactory{Ops: &lrminiodriver.Options{}})
+	case "local":
+		strata.RunCLI(lrldriver.DriverFactory{Ops: &lrldriver.Options{}})
 	default:
 		strata.RunCLI(lrs3driver.DriverFactory{Ops: &lrs3driver.Options{}})
 	}
