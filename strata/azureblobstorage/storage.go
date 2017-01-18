@@ -2,6 +2,9 @@ package azureblobstorage
 
 import (
 	"io"
+	"math"
+	"fmt"
+	"encoding/base64"
 
 	"github.com/Azure/azure-sdk-for-go/storage"
 	"github.com/facebookgo/rocks-strata/strata"
@@ -9,6 +12,8 @@ import (
 	"io/ioutil"
 	"strings"
 )
+
+const MAX_BLOCK_SIZE = 1024 * 1024 * 1024 * 100 // 100MB
 
 type AzureBlobStorage struct {
 	client *storage.Client
@@ -49,8 +54,6 @@ func NewAzureBlobStorage(accountName string, accountKey string, containerName st
 }
 
 func (azureBlob *AzureBlobStorage) Get(path string) (io.ReadCloser, error) {
-	path = azureBlob.addPrefix(path)
-
 	props, err := azureBlob.blobStorageClient.GetBlobProperties(azureBlob.containerName, path)
 	if err != nil {
 		return nil, err
@@ -73,9 +76,29 @@ func (azureBlob *AzureBlobStorage) Get(path string) (io.ReadCloser, error) {
 }
 
 func (azureBlob *AzureBlobStorage) Put(path string, data []byte) error {
-	path = azureBlob.addPrefix(path)
+	data_length := len(data)
+	block_count := int(math.Ceil(float64(data_length) / MAX_BLOCK_SIZE))
 
-	err := azureBlob.blobStorageClient.PutBlock(azureBlob.containerName, path, "0", data)
+	block_ids := make([]storage.Block, block_count, block_count)
+
+	for i := 0; i < block_count; i++ {
+		block_id := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%10d", i)))
+
+		min_data_range := i * MAX_BLOCK_SIZE
+		max_data_range := int(math.Min(float64((i + 1) * MAX_BLOCK_SIZE), float64(data_length)))
+
+		data_slice := data[min_data_range:max_data_range]
+
+		err := azureBlob.blobStorageClient.PutBlock(azureBlob.containerName, path, block_id, data_slice)
+		if err != nil {
+			return err
+		}
+
+		block_ids[i].ID = block_id
+		block_ids[i].Status = storage.BlockStatusLatest
+	}
+
+	err := azureBlob.blobStorageClient.PutBlockList(azureBlob.containerName, path, block_ids)
 
 	return err
 }
