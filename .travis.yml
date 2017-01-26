@@ -3,6 +3,8 @@ language: go
 env:
     # Set to true when a MongoRocks environment is set up
     - USING_MONGO_3X=false
+    # Set to true when Azure Storage Emulator is running on localhost:10000
+    - USING_AZURE_STORAGE_EMULATOR=false
 
 go:
     - 1.7

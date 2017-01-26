@@ -3,9 +3,14 @@ package azureblobstorage
 import (
 	"testing"
 	"github.com/facebookgo/rocks-strata/strata"
+	"os"
 )
 
 func TestAzureStorage(t *testing.T) {
+	if os.Getenv("USING_AZURE_STORAGE_EMULATOR") != "true" {
+		t.Skip("Skipping test. Set USING_AZURE_STORAGE_EMULATOR=true to run.")
+	}
+
 	t.Parallel()
 	azure := NewMockAzure(t)
 	defer azure.Stop()
@@ -14,6 +19,10 @@ func TestAzureStorage(t *testing.T) {
 }
 
 func TestAzureStorageManyFiles(t *testing.T) {
+	if os.Getenv("USING_AZURE_STORAGE_EMULATOR") != "true" {
+		t.Skip("Skipping test. Set USING_AZURE_STORAGE_EMULATOR=true to run.")
+	}
+
 	t.Parallel()
 	azure := NewMockAzure(t)
 	defer azure.Stop()
