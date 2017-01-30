@@ -1,9 +1,10 @@
 package azureblobstorage
 
 import (
-	"testing"
-	"github.com/facebookgo/rocks-strata/strata"
 	"os"
+	"testing"
+
+	"github.com/facebookgo/rocks-strata/strata"
 )
 
 func TestAzureStorage(t *testing.T) {

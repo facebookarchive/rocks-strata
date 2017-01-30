@@ -1,13 +1,13 @@
 package azureblobstorage
 
 import (
+	"fmt"
+	"math/rand"
 	"testing"
+
 	"github.com/Azure/azure-sdk-for-go/storage"
 	"github.com/facebookgo/ensure"
-	"math/rand"
-	"fmt"
 )
-
 
 type AzureMock struct {
 	azureEmulator *AzureBlobStorage
@@ -27,14 +27,14 @@ func NewMockAzure(t *testing.T) *AzureMock {
 
 	blobService := azureEmulatorClient.GetBlobService()
 
-	blobMock := AzureBlobStorage {
+	blobMock := AzureBlobStorage{
 		blobStorageClient: &blobService,
-		client: &azureEmulatorClient,
-		containerName: fmt.Sprintf("testcontainer%d", rand.Intn(100000)), //Randomizing since the container in the emulator is "finally" consistent
-		prefix: "",
+		client:            &azureEmulatorClient,
+		containerName:     fmt.Sprintf("testcontainer%d", rand.Intn(100000)), //Randomizing since the container in the emulator is "finally" consistent
+		prefix:            "",
 	}
 
-	m := AzureMock {
+	m := AzureMock{
 		azureEmulator: &blobMock,
 	}
 

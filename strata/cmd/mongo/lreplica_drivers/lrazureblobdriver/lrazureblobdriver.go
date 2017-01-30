@@ -6,12 +6,12 @@ import (
 	"strconv"
 
 	"github.com/facebookgo/rocks-strata/strata"
-	"github.com/facebookgo/rocks-strata/strata/mongo/lreplica"
 	"github.com/facebookgo/rocks-strata/strata/azureblobstorage"
+	"github.com/facebookgo/rocks-strata/strata/mongo/lreplica"
 )
 
 type AzureBlobOptions struct {
-	Container string `short:"C" long:"container" description:"Azure Blob Storage container name" required:"true"`
+	Container  string `short:"C" long:"container" description:"Azure Blob Storage container name" required:"true"`
 	BlobPrefix string `short:"p" long:"blob-prefix" description:"Prefix used when storing and retrieving files. Optional" optional:"true"`
 }
 
@@ -25,8 +25,8 @@ type ReplicaOptions struct {
 
 // Options define the common options needed by this strata command
 type Options struct {
-	AzureBlobOptions AzureBlobOptions  `group:"Azure Blob Options"`
-	Replica 	 ReplicaOptions    `group:"Replica Options"`
+	AzureBlobOptions AzureBlobOptions `group:"Azure Blob Options"`
+	Replica          ReplicaOptions   `group:"Replica Options"`
 }
 
 // DriverFactory implements strata.DriverFactory
@@ -73,4 +73,3 @@ func (factory DriverFactory) Driver() (*strata.Driver, error) {
 	}
 	return &strata.Driver{Manager: manager}, err
 }
-

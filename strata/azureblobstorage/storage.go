@@ -1,23 +1,24 @@
 package azureblobstorage
 
 import (
+	"encoding/base64"
+	"fmt"
 	"io"
 	"math"
-	"fmt"
-	"encoding/base64"
 
-	"github.com/Azure/azure-sdk-for-go/storage"
 	"io/ioutil"
 	"strings"
+
+	"github.com/Azure/azure-sdk-for-go/storage"
 )
 
 const MAX_BLOCK_SIZE = 1024 * 1024 * 4 // 4MB
 
 type AzureBlobStorage struct {
-	client *storage.Client
+	client            *storage.Client
 	blobStorageClient *storage.BlobStorageClient
-	containerName string
-	prefix string
+	containerName     string
+	prefix            string
 }
 
 func (azureBlob *AzureBlobStorage) addPrefix(path string) string {
@@ -52,10 +53,10 @@ func NewAzureBlobStorage(accountName string, accountKey string, containerName st
 	}
 
 	return &AzureBlobStorage{
-		client: &azureClient,
+		client:            &azureClient,
 		blobStorageClient: &blobClient,
-		containerName: containerName,
-		prefix: prefix,
+		containerName:     containerName,
+		prefix:            prefix,
 	}, nil
 }
 
@@ -73,7 +74,7 @@ func (azureBlob *AzureBlobStorage) Put(path string, data []byte) error {
 		block_id := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%10d", i)))
 
 		min_data_range := i * MAX_BLOCK_SIZE
-		max_data_range := int(math.Min(float64((i + 1) * MAX_BLOCK_SIZE), float64(data_length)))
+		max_data_range := int(math.Min(float64((i+1)*MAX_BLOCK_SIZE), float64(data_length)))
 
 		data_slice := data[min_data_range:max_data_range]
 
@@ -114,7 +115,7 @@ func (azureBlob *AzureBlobStorage) List(prefix string, maxSize int) ([]string, e
 	items := make([]string, 0, 1000)
 	for remaining_size > 0 {
 		contents, err := azureBlob.blobStorageClient.ListBlobs(azureBlob.containerName,
-			storage.ListBlobsParameters{ Prefix: prefix, Delimiter: pathSeparator, Marker: marker, MaxResults: uint(remaining_size) })
+			storage.ListBlobsParameters{Prefix: prefix, Delimiter: pathSeparator, Marker: marker, MaxResults: uint(remaining_size)})
 
 		if err != nil {
 			return nil, err
