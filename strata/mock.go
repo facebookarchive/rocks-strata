@@ -10,6 +10,7 @@ import (
 	"io"
 	"io/ioutil"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -110,7 +111,8 @@ func (m *MockReplica) MaxBackgroundCopies() int {
 
 // MockStorage implements PersistenceManager for mocking
 type MockStorage struct {
-	objects map[string][]byte
+	objects      map[string][]byte
+	objectsMutex sync.RWMutex
 	// saveDelay will only apply to the first object saved
 	saveDelay time.Duration
 }
@@ -118,8 +120,9 @@ type MockStorage struct {
 // NewMockStorage instantiates a MockPersistenceManager
 func NewMockStorage(saveDelay time.Duration) *MockStorage {
 	return &MockStorage{
-		objects:   map[string][]byte{},
-		saveDelay: saveDelay,
+		objects:      map[string][]byte{},
+		objectsMutex: sync.RWMutex{},
+		saveDelay:    saveDelay,
 	}
 }
 
@@ -142,6 +145,8 @@ func (r readCloser) Read(bytes []byte) (int, error) {
 
 // Get returns the data stored at key
 func (m *MockStorage) Get(key string) (io.ReadCloser, error) {
+	m.objectsMutex.RLock()
+	defer m.objectsMutex.RUnlock()
 	if data, ok := m.objects[key]; ok {
 		return readCloser{R: bytes.NewReader(data)}, nil
 	}
@@ -154,6 +159,8 @@ func (m *MockStorage) Put(key string, data []byte) error {
 		time.Sleep(m.saveDelay)
 		m.saveDelay = 0
 	}
+	m.objectsMutex.Lock()
+	defer m.objectsMutex.Unlock()
 	m.objects[key] = data
 	return nil
 }
@@ -168,12 +175,16 @@ func (m *MockStorage) PutReader(key string, reader io.Reader) error {
 	if err != nil {
 		return err
 	}
+	m.objectsMutex.Lock()
+	defer m.objectsMutex.Unlock()
 	m.objects[key] = data
 	return nil
 }
 
 // Delete an item from the mock store
 func (m *MockStorage) Delete(key string) error {
+	m.objectsMutex.Lock()
+	defer m.objectsMutex.Unlock()
 	delete(m.objects, key)
 	return nil
 }
@@ -182,6 +193,8 @@ func (m *MockStorage) Delete(key string) error {
 func (m *MockStorage) List(prefix string, maxSize int) ([]string, error) {
 	var list []string
 	size := 0
+	m.objectsMutex.RLock()
+	defer m.objectsMutex.RUnlock()
 	for k := range m.objects {
 		if size == maxSize {
 			break
@@ -196,6 +209,8 @@ func (m *MockStorage) List(prefix string, maxSize int) ([]string, error) {
 
 // Corrupt corrupts the data stored at |key|
 func (m *MockStorage) Corrupt(key string) error {
+	m.objectsMutex.Lock()
+	defer m.objectsMutex.Unlock()
 	if _, found := m.objects[key]; !found {
 		return ErrNotFound(key)
 	}
