@@ -10,7 +10,6 @@ import (
 	"github.com/facebookgo/rocks-strata/strata/azureblobstorage"
 )
 
-// AWSOptions are common to all commands
 type AzureBlobOptions struct {
 	Container string `short:"C" long:"container" description:"Azure Blob Storage container name" required:"true"`
 	BlobPrefix string `short:"p" long:"blob-prefix" description:"Prefix used when storing and retrieving files. Optional" optional:"true"`
