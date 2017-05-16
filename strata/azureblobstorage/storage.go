@@ -7,7 +7,6 @@ import (
 	"math"
 
 	"io/ioutil"
-	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/storage"
 )
@@ -17,6 +16,7 @@ const MAX_BLOCK_SIZE = 1024 * 1024 * 4 // 4MB
 type AzureBlobStorage struct {
 	client            *storage.Client
 	blobStorageClient *storage.BlobStorageClient
+	blobContainer     *storage.Container
 	containerName     string
 	prefix            string
 }
@@ -45,9 +45,16 @@ func NewAzureBlobStorage(accountName string, accountKey string, containerName st
 
 	blobClient := azureClient.GetBlobService()
 
-	err = blobClient.CreateContainer(containerName, storage.ContainerAccessTypePrivate)
+	container := blobClient.GetContainerReference(containerName)
+	containerExists, err := container.Exists()
+
 	if err != nil {
-		if !strings.Contains(err.Error(), "The specified container already exists.") {
+		return nil, err
+	}
+
+	if !containerExists {
+		err = container.Create(&storage.CreateContainerOptions {Access: storage.ContainerAccessTypePrivate})
+		if err != nil {
 			return nil, err
 		}
 	}
@@ -55,13 +62,14 @@ func NewAzureBlobStorage(accountName string, accountKey string, containerName st
 	return &AzureBlobStorage{
 		client:            &azureClient,
 		blobStorageClient: &blobClient,
+		blobContainer:	   container,
 		containerName:     containerName,
 		prefix:            prefix,
 	}, nil
 }
 
 func (azureBlob *AzureBlobStorage) Get(path string) (io.ReadCloser, error) {
-	return azureBlob.blobStorageClient.GetBlob(azureBlob.containerName, path)
+	return azureBlob.blobContainer.GetBlobReference(path).Get(&storage.GetBlobOptions{})
 }
 
 func (azureBlob *AzureBlobStorage) Put(path string, data []byte) error {
@@ -78,7 +86,7 @@ func (azureBlob *AzureBlobStorage) Put(path string, data []byte) error {
 
 		data_slice := data[min_data_range:max_data_range]
 
-		err := azureBlob.blobStorageClient.PutBlock(azureBlob.containerName, path, block_id, data_slice)
+		err := azureBlob.blobContainer.GetBlobReference(path).PutBlock(block_id, data_slice, &storage.PutBlockOptions{})
 		if err != nil {
 			return err
 		}
@@ -87,7 +95,7 @@ func (azureBlob *AzureBlobStorage) Put(path string, data []byte) error {
 		block_ids[i].Status = storage.BlockStatusLatest
 	}
 
-	err := azureBlob.blobStorageClient.PutBlockList(azureBlob.containerName, path, block_ids)
+	err := azureBlob.blobContainer.GetBlobReference(path).PutBlockList(block_ids, &storage.PutBlockListOptions{})
 
 	return err
 }
@@ -102,7 +110,7 @@ func (azureBlob *AzureBlobStorage) PutReader(path string, reader io.Reader) erro
 
 func (azureBlob *AzureBlobStorage) Delete(path string) error {
 	path = azureBlob.addPrefix(path)
-	err := azureBlob.blobStorageClient.DeleteBlob(azureBlob.containerName, path, map[string]string{})
+	err := azureBlob.blobContainer.GetBlobReference(path).Delete(&storage.DeleteBlobOptions{})
 	return err
 }
 
@@ -114,8 +122,7 @@ func (azureBlob *AzureBlobStorage) List(prefix string, maxSize int) ([]string, e
 
 	items := make([]string, 0, 1000)
 	for remaining_size > 0 {
-		contents, err := azureBlob.blobStorageClient.ListBlobs(azureBlob.containerName,
-			storage.ListBlobsParameters{Prefix: prefix, Delimiter: pathSeparator, Marker: marker, MaxResults: uint(remaining_size)})
+		contents, err := azureBlob.blobContainer.ListBlobs(storage.ListBlobsParameters{Prefix: prefix, Delimiter: pathSeparator, Marker: marker, MaxResults: uint(remaining_size)})
 
 		if err != nil {
 			return nil, err
