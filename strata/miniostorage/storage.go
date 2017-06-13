@@ -97,13 +97,14 @@ func (m *MinioStorage) Delete(name string) error {
 func (m *MinioStorage) List(prefix string, maxSize int) ([]string, error) {
 
 	doneCh := make(chan struct{})
+	path := m.addPrefix(prefix)
 
 	objCh := m.minio.ListObjectsV2(m.bucket, prefix, true, doneCh)
 
 	items := []string{}
 
 	for obj := range objCh {
-		items = append(items, obj.Key)
+		items = append(items, m.removePrefix(obj.Key))
 	}
 
 	return items, nil
