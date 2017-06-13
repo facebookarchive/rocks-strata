@@ -99,7 +99,7 @@ func (m *MinioStorage) List(prefix string, maxSize int) ([]string, error) {
 	doneCh := make(chan struct{})
 	path := m.addPrefix(prefix)
 
-	objCh := m.minio.ListObjectsV2(m.bucket, prefix, true, doneCh)
+	objCh := m.minio.ListObjectsV2(m.bucket, path, true, doneCh)
 
 	items := []string{}
 
