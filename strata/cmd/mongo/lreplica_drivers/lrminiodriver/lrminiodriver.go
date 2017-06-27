@@ -69,6 +69,7 @@ func (factory DriverFactory) Driver() (*strata.Driver, error) {
 
 	replica, err := lreplica.NewLocalReplica(
 		options.Replica.MaxBackgroundCopies,
+		options.Replica.DatabaseHostname,
 		strconv.Itoa(options.Replica.Port),
 		options.Replica.Username,
 		options.Replica.Password,

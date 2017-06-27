@@ -10,19 +10,19 @@ import (
 
 	"github.com/facebookgo/rocks-strata/strata"
 	"github.com/facebookgo/rocks-strata/strata/cmd/mongo/lreplica_drivers/lrs3driver"
-	"github.com/facebookgo/rocks-strata/strata/mongo/lreplica"
 	"github.com/facebookgo/rocks-strata/strata/lstorage"
+	"github.com/facebookgo/rocks-strata/strata/mongo/lreplica"
 )
 
 // FsOptions are common to all commands
 type FsOptions struct {
-	Mountpoint   string `short:"m" long:"mpoint" description:"Mount point name, such as \"~/sbackup\"" default:"~/sbackup"`
+	Mountpoint string `short:"m" long:"mpoint" description:"Mount point name, such as \"~/sbackup\"" default:"~/sbackup"`
 }
 
 // Options define the common options needed by this strata command
 type Options struct {
-	LocalStorage   FsOptions          `group:"Storage Options"`
-	Replica lrs3driver.ReplicaOptions `group:"Replica Options"`
+	LocalStorage FsOptions                 `group:"Storage Options"`
+	Replica      lrs3driver.ReplicaOptions `group:"Replica Options"`
 }
 
 // DriverFactory implements strata.DriverFactory
@@ -46,6 +46,7 @@ func (factory DriverFactory) Driver() (*strata.Driver, error) {
 
 	replica, err := lreplica.NewLocalReplica(
 		options.Replica.MaxBackgroundCopies,
+		options.Replica.DatabaseHostname,
 		strconv.Itoa(options.Replica.Port),
 		options.Replica.Username,
 		options.Replica.Password,

@@ -22,14 +22,14 @@ import (
 )
 
 type sessionGetter interface {
-	get(port, username, password string) (*mgo.Session, error)
+	get(databaseHostname, port, username, password string) (*mgo.Session, error)
 }
 
 type localSessionGetter struct{}
 
 // port could be the empty string
-func (l *localSessionGetter) get(port, username, password string) (*mgo.Session, error) {
-	addr := "localhost"
+func (l *localSessionGetter) get(databaseHostname, port, username, password string) (*mgo.Session, error) {
+	addr := databaseHostname
 	if port != "" {
 		addr += ":" + port
 	}
@@ -44,6 +44,7 @@ func (l *localSessionGetter) get(port, username, password string) (*mgo.Session,
 // LocalReplica is a replica where all methods that take a ReplicaID must be
 // run on the host corresponding to ReplicaID
 type LocalReplica struct {
+	databaseHostname    string
 	port                string
 	username            string
 	password            string
@@ -52,10 +53,11 @@ type LocalReplica struct {
 }
 
 // NewLocalReplica constructs a LocalReplica
-func NewLocalReplica(maxBackgroundCopies int, port, username, password string) (*LocalReplica, error) {
+func NewLocalReplica(maxBackgroundCopies int, databaseHostname, port, username, password string) (*LocalReplica, error) {
 	return &LocalReplica{
 		sessionGetter:       &localSessionGetter{},
 		maxBackgroundCopies: maxBackgroundCopies,
+		databaseHostname:    databaseHostname,
 		port:                port,
 		username:            username,
 		password:            password,
@@ -170,7 +172,7 @@ func nestedBsonMapGet(m bson.M, arg string, moreArgs ...string) (interface{}, er
 // TODO(agf): Have a way to pass in tags
 func (r *LocalReplica) CreateSnapshot(replicaID, snapshotID string) (*strata.Snapshot, error) {
 	strata.Log("Getting session for CreateSnapshot()")
-	session, err := r.sessionGetter.get(r.port, r.username, r.password)
+	session, err := r.sessionGetter.get(r.databaseHostname, r.port, r.username, r.password)
 	if err != nil {
 		return nil, err
 	}
@@ -302,3 +304,4 @@ func partialChecksum(filename string) (string, error) {
 	csum, err := strata.PartialChecksum(file, fileinfo.Size())
 	return fmt.Sprintf("%x", csum), err
 }
+

@@ -27,6 +27,7 @@ type AWSOptions struct {
 
 // ReplicaOptions are used for commands like backup and restore
 type ReplicaOptions struct {
+	DatabaseHostname    string `long:"database-hostname" default:"localhost" description:"Database hostname can be override with a specific hostname in most cases localhost is sufficient"`
 	MaxBackgroundCopies int    `long:"max-background-copies" default:"16" description:"Backup and restore actions will use up to this many goroutines to copy files"`
 	Port                int    `long:"port" default:"27017" description:"Backup should look for a mongod instance that is listening on this port"`
 	Username            string `long:"username" description:"If auth is configured, specify the username with admin privileges here"`
@@ -70,6 +71,7 @@ func (factory DriverFactory) Driver() (*strata.Driver, error) {
 	}
 	replica, err := lreplica.NewLocalReplica(
 		options.Replica.MaxBackgroundCopies,
+		options.Replica.DatabaseHostname,
 		strconv.Itoa(options.Replica.Port),
 		options.Replica.Username,
 		options.Replica.Password,
