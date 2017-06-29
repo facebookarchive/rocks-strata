@@ -42,6 +42,7 @@ func (factory DriverFactory) Driver() (*strata.Driver, error) {
 	secure := os.Getenv("MINIO_SECURE")
 	accessKey := os.Getenv("MINIO_ACCESS_KEY_ID")
 	secretKey := os.Getenv("MINIO_SECRET_ACCESS_KEY")
+	allowInsecureHTTPS := os.Getenv("MINIO_ALLOW_INSECURE_HTTPS")
 	if endPoint == "" || accessKey == "" || secretKey == "" {
 		return nil, errors.New("Environment variables MINIO_ENDPOINT, MINIO_ACCESS_KEY_ID and MINIO_SECRET_ACCESS_KEY must be set")
 	}
@@ -55,13 +56,23 @@ func (factory DriverFactory) Driver() (*strata.Driver, error) {
 		return nil, errors.New("Valid values for environment variable MINIO_SECURE are 1, t, T, TRUE, true, True, 0, f, F, FALSE, false, False")
 	}
 
+	if allowInsecureHTTPS == "" {
+		allowInsecureHTTPS = "false"
+	}
+
+	allowInsecureHTTPSBool, err := strconv.ParseBool(allowInsecureHTTPS)
+	if err != nil {
+		return nil, errors.New("Valid values for environment variable MINIO_ALLOW_INSECURE_HTTPS are 1, t, T, TRUE, true, True, 0, f, F, FALSE, false, False")
+	}
+
 	minio, err := miniostorage.NewMinioStorage(
 		endPoint,
 		accessKey, secretKey,
 		options.Minio.BucketName,
 		options.Minio.BucketPrefix,
 		options.Minio.Region,
-		secureBool)
+		secureBool,
+		allowInsecureHTTPSBool)
 
 	if err != nil {
 		return nil, err
@@ -73,6 +84,7 @@ func (factory DriverFactory) Driver() (*strata.Driver, error) {
 		strconv.Itoa(options.Replica.Port),
 		options.Replica.Username,
 		options.Replica.Password,
+		options.Replica.SslAllowInvalidCertificates,
 	)
 
 	if err != nil {
