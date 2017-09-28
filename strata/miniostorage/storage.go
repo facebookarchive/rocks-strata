@@ -72,7 +72,7 @@ func (m *MinioStorage) Get(name string) (io.ReadCloser, error) {
 func (m *MinioStorage) Put(name string, data []byte) error {
 
 	path := m.addPrefix(name)
-	_, err := m.minio.PutObject(m.bucket, path, bytes.NewReader(data), "application/octet-stream")
+	_, err := m.minio.PutObject(m.bucket, path, bytes.NewReader(data), int64(len(data)), &minio.PutObjectOptions{ContentType: "application/octet-stream"})
 
 	return err
 }
