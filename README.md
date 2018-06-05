@@ -1,3 +1,4 @@
+*Note from former maintainer Aaron Feldman: This project does not have an active maintainer and should be considered “archived.” As of May 2018 or earlier, it is no longer in production use at Facebook. MongoRocks used to be supported externally by Percona, but is [no longer]( https://www.percona.com/doc/percona-server-for-mongodb/LATEST/mongorocks.html). This codebase could still be used to build incremental backup solutions for other projects built on [RocksDB]( https://github.com/facebook/rocksdb).*
 # rocks-strata: A Framework for Managing Incremental Backups with the RocksDB Storage Engine
 
 [![Build Status](https://secure.travis-ci.org/facebookgo/rocks-strata.png?branch=master)](http://travis-ci.org/facebookgo/rocks-strata)
