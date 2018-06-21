@@ -2,8 +2,10 @@ package miniostorage
 
 import (
 	"bytes"
+	"crypto/tls"
 	"io"
 	"io/ioutil"
+	"net/http"
 
 	minio "github.com/minio/minio-go"
 )
@@ -25,12 +27,17 @@ func (m *MinioStorage) removePrefix(name string) string {
 }
 
 // NewMinioStorage initializes the MinioStorage with Minio arguments
-func NewMinioStorage(endPoint, accessKeyID, secretAccessKey, bucket, prefix, region string, secure bool) (*MinioStorage, error) {
-
+func NewMinioStorage(endPoint, accessKeyID, secretAccessKey, bucket, prefix, region string, secure bool, allowInsecureHTTPS bool) (*MinioStorage, error) {
 	mc, err := minio.New(endPoint, accessKeyID, secretAccessKey, secure)
-
 	if err != nil {
 		return nil, err
+	}
+
+	if allowInsecureHTTPS {
+		tr := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+		mc.SetCustomTransport(tr)
 	}
 
 	if region == "" {

@@ -6,10 +6,13 @@
 package lreplica
 
 import (
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
+	"net"
 	"os"
 	"strings"
 	"syscall"
@@ -22,17 +25,38 @@ import (
 )
 
 type sessionGetter interface {
-	get(port, username, password string) (*mgo.Session, error)
+	get(sslAllowInvalidCertificates bool, localHostname, port, username, password string) (*mgo.Session, error)
 }
 
 type localSessionGetter struct{}
 
 // port could be the empty string
-func (l *localSessionGetter) get(port, username, password string) (*mgo.Session, error) {
-	addr := "localhost"
+func (l *localSessionGetter) get(sslAllowInvalidCertificates bool, localHostname, port, username, password string) (*mgo.Session, error) {
+	addr := localHostname
 	if port != "" {
 		addr += ":" + port
 	}
+
+	if sslAllowInvalidCertificates {
+		tlsConfig := &tls.Config{
+			InsecureSkipVerify: true,
+		}
+
+		return mgo.DialWithInfo(&mgo.DialInfo{
+			Direct:   true,
+			Addrs:    []string{addr},
+			Timeout:  5 * time.Minute,
+			Username: username,
+			Password: password,
+			DialServer: func(addr *mgo.ServerAddr) (net.Conn, error) {
+				conn, err := tls.Dial("tcp", addr.String(), tlsConfig)
+				if err != nil {
+					log.Println(err)
+				}
+				return conn, err
+			}})
+	}
+
 	return mgo.DialWithInfo(&mgo.DialInfo{
 		Direct:   true,
 		Addrs:    []string{addr},
@@ -44,21 +68,25 @@ func (l *localSessionGetter) get(port, username, password string) (*mgo.Session,
 // LocalReplica is a replica where all methods that take a ReplicaID must be
 // run on the host corresponding to ReplicaID
 type LocalReplica struct {
-	port                string
-	username            string
-	password            string
-	sessionGetter       sessionGetter
-	maxBackgroundCopies int
+	localHostname            string
+	port                        string
+	username                    string
+	password                    string
+	sslAllowInvalidCertificates bool
+	sessionGetter               sessionGetter
+	maxBackgroundCopies         int
 }
 
 // NewLocalReplica constructs a LocalReplica
-func NewLocalReplica(maxBackgroundCopies int, port, username, password string) (*LocalReplica, error) {
+func NewLocalReplica(maxBackgroundCopies int, localHostname, port, username, password string, sslAllowInvalidCertificates bool) (*LocalReplica, error) {
 	return &LocalReplica{
-		sessionGetter:       &localSessionGetter{},
-		maxBackgroundCopies: maxBackgroundCopies,
-		port:                port,
-		username:            username,
-		password:            password,
+		sessionGetter:               &localSessionGetter{},
+		maxBackgroundCopies:         maxBackgroundCopies,
+		localHostname:            	 localHostname,
+		port:                        port,
+		username:                    username,
+		password:                    password,
+		sslAllowInvalidCertificates: sslAllowInvalidCertificates,
 	}, nil
 
 }
@@ -170,7 +198,7 @@ func nestedBsonMapGet(m bson.M, arg string, moreArgs ...string) (interface{}, er
 // TODO(agf): Have a way to pass in tags
 func (r *LocalReplica) CreateSnapshot(replicaID, snapshotID string) (*strata.Snapshot, error) {
 	strata.Log("Getting session for CreateSnapshot()")
-	session, err := r.sessionGetter.get(r.port, r.username, r.password)
+	session, err := r.sessionGetter.get(r.sslAllowInvalidCertificates, r.localHostname, r.port, r.username, r.password)
 	if err != nil {
 		return nil, err
 	}

@@ -7,26 +7,20 @@ import (
 
 	"github.com/facebookgo/rocks-strata/strata"
 	"github.com/facebookgo/rocks-strata/strata/azureblobstorage"
+	"github.com/facebookgo/rocks-strata/strata/cmd/mongo/lreplica_drivers/lrs3driver"
 	"github.com/facebookgo/rocks-strata/strata/mongo/lreplica"
 )
 
+// AzureBlobOptions define basic options of your azure blob storage
 type AzureBlobOptions struct {
 	Container  string `short:"C" long:"container" description:"Azure Blob Storage container name" required:"true"`
 	BlobPrefix string `short:"p" long:"blob-prefix" description:"Prefix used when storing and retrieving files. Optional" optional:"true"`
 }
 
-// ReplicaOptions are used for commands like backup and restore
-type ReplicaOptions struct {
-	MaxBackgroundCopies int    `long:"max-background-copies" default:"16" description:"Backup and restore actions will use up to this many goroutines to copy files"`
-	Port                int    `long:"port" default:"27017" description:"Backup should look for a mongod instance that is listening on this port"`
-	Username            string `long:"username" description:"If auth is configured, specify the username with admin privileges here"`
-	Password            string `long:"password" description:"Password for the specified user."`
-}
-
 // Options define the common options needed by this strata command
 type Options struct {
-	AzureBlobOptions AzureBlobOptions `group:"Azure Blob Options"`
-	Replica          ReplicaOptions   `group:"Replica Options"`
+	AzureBlobOptions AzureBlobOptions          `group:"Azure Blob Options"`
+	Replica          lrs3driver.ReplicaOptions `group:"Replica Options"`
 }
 
 // DriverFactory implements strata.DriverFactory
@@ -60,9 +54,11 @@ func (factory DriverFactory) Driver() (*strata.Driver, error) {
 
 	replica, err := lreplica.NewLocalReplica(
 		options.Replica.MaxBackgroundCopies,
+		options.Replica.LocalHostname,
 		strconv.Itoa(options.Replica.Port),
 		options.Replica.Username,
 		options.Replica.Password,
+		options.Replica.SslAllowInvalidCertificates,
 	)
 	if err != nil {
 		return nil, err
